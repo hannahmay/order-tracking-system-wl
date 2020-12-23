@@ -254,45 +254,42 @@ module.exports = {
 
     /**
      * Css path rewriter when bundle files moved
-     * @param bundle
+     * @param folder
      */
-    cssRewriter: function (bundle) {
-        var imgRegex = new RegExp(/\.(gif|jpg|jpeg|tiff|png|ico|svg)$/i);
+    cssRewriter: function (folder) {
+        var imgRegex = new RegExp(/\.(gif|jpg|jpeg|tiff|png|ico)$/i);
+        // var fontRegex = new RegExp(/\.(otf|eot|svg|ttf|woff|woff2)$/i);
+        var vendorGlobalRegex = new RegExp(/vendors\/global/i);
         var config = this.config;
 
         return lazypipe().pipe(function () {
             // rewrite css relative path
             return rewrite({
-                destination: bundle['styles'],
+                destination: folder,
                 debug: config.debug,
                 adaptPath: function (ctx) {
-
                     var isCss = ctx.sourceFile.match(/\.[css]+$/i);
                     // process css only
                     if (isCss[0] === '.css') {
+                        var pieces = ctx.sourceDir.split(/\\|\//);
 
-                        if (/plugins\.bundle/.test(bundle['styles'])) {
-                            var filePcs = ctx.targetFile.split(/\\|\//);
-                            if (filePcs.length > 2) {
-                                filePcs.shift();
-                                filePcs.shift();
-                            }
-
-                            var pieces = ctx.sourceDir.split(/\\|\//);
+                        var vendor = '';
+                        if (vendorGlobalRegex.test(folder)) {
                             // only vendors/base pass this
-                            var vendor = pieces[pieces.indexOf('node_modules') + 1];
+                            vendor = pieces[pieces.indexOf('node_modules') + 1];
                             if (pieces.indexOf('node_modules') === -1) {
-                                vendor = pieces[pieces.indexOf('plugins') + 1];
+                                vendor = pieces[pieces.indexOf('vendors') + 1];
                             }
-                            var extension = 'fonts/';
-                            if (imgRegex.test(ctx.targetFile)) {
-                                extension = 'images/';
-                            }
-
-                            return path.join(extension, vendor, filePcs.join('/'));
                         }
 
-                        return ctx.targetFile.replace(/\.?\.\//, '');
+                        var file = module.exports.baseFileName(ctx.targetFile);
+
+                        var extension = 'fonts/';
+                        if (imgRegex.test(file)) {
+                            extension = 'images/';
+                        }
+
+                        return path.join(extension + vendor, file);
                     }
                 },
             });
@@ -450,7 +447,7 @@ module.exports = {
                                     shouldRtl = true;
                                 }
                                 var rtlOutput = _self.pathOnly(bundle.bundle[type]) + '/' + _self.baseName(bundle.bundle[type]) + '.rtl.css';
-                                stream = gulp.src(toRtlFiles, {allowEmpty: true}).pipe(_self.cssRewriter(bundle.bundle)()).pipe(concat(_self.baseName(bundle.bundle[type]) + '.rtl.css')).pipe(_self.cssChannel(shouldRtl)());
+                                stream = gulp.src(toRtlFiles, {allowEmpty: true}).pipe(_self.cssRewriter(bundle.bundle[type])()).pipe(concat(_self.baseName(bundle.bundle[type]) + '.rtl.css')).pipe(_self.cssChannel(shouldRtl)());
                                 var output = _self.outputChannel(rtlOutput, _self.baseName(bundle.bundle[type]) + '.rtl.css', type)();
                                 if (output) {
                                     stream.pipe(output);
@@ -459,7 +456,7 @@ module.exports = {
                             }
 
                             // default css bundle
-                            stream = gulp.src(bundle.src[type], {allowEmpty: true}).pipe(_self.cssRewriter(bundle.bundle)()).pipe(concat(outputFile)).pipe(_self.cssChannel()());
+                            stream = gulp.src(bundle.src[type], {allowEmpty: true}).pipe(_self.cssRewriter(bundle.bundle[type])()).pipe(concat(outputFile)).pipe(_self.cssChannel()());
                             var output = _self.outputChannel(bundle.bundle[type], outputFile, type)();
                             if (output) {
                                 stream.pipe(output);
@@ -540,6 +537,43 @@ module.exports = {
                                 }
                                 streams.push(stream);
                             }
+                            break;
+                        case 'styles-by-demo':
+                            // custom scss with suffix demos
+                            module.exports.getDemos().forEach(function (demo) {
+                                // custom page scss
+                                stream = gulp.src(bundle.src[type], {allowEmpty: true}).pipe(_self.cssChannel(false, [
+                                    '../themes/themes/' + module.exports.config.theme + '/src/sass/theme/demos/' + demo + '/', //  development
+                                    '../src/assets/sass/theme/demos/' + demo + '/', // release default package
+                                    '../src/sass/theme/demos/' + demo + '/', // release angular package
+                                ])());// pipe(rename({ suffix: '.' + demo })).
+
+                                var output = _self.outputChannel(bundle.output[type], undefined, type)();
+                                if (output) {
+                                    stream.pipe(output);
+                                }
+                                streams.push(stream);
+
+                                // rtl styles for scss
+                                var shouldRtl = false;
+                                if (build.config.compile.rtl.enabled) {
+                                    bundle.src[type].forEach(function (output) {
+                                        if (output.indexOf('.scss') !== -1) {
+                                            return shouldRtl = true;
+                                        }
+                                    });
+                                    stream = gulp.src(bundle.src[type], {allowEmpty: true}).pipe(_self.cssChannel(shouldRtl, [
+                                        '../themes/themes/' + module.exports.config.theme + '/src/sass/theme/demos/' + demo + '/', //  development
+                                        '../src/assets/sass/theme/demos/' + demo + '/', // release default package
+                                        '../src/sass/theme/demos/' + demo + '/', // release angular package
+                                    ])()).pipe(rename({suffix: '.rtl'}));
+                                    var output = _self.outputChannel(bundle.output[type], undefined, type)();
+                                    if (output) {
+                                        stream.pipe(output);
+                                    }
+                                    streams.push(stream);
+                                }
+                            });
                             break;
                         case 'scripts':
                             stream = gulp.src(bundle.src[type], {allowEmpty: true}).pipe(_self.jsChannel()());

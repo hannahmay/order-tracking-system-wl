@@ -9,10 +9,7 @@ var fs = require('fs');
 var pretty = require('pretty');
 var sass = require('gulp-sass');
 var merge = require('merge-stream');
-
-if (Object.keys(build).length === 0) {
-    return;
-}
+var del = require('del');
 
 // merge with default parameters
 var args = Object.assign({
@@ -22,9 +19,6 @@ var args = Object.assign({
     theme: '',
     demo: '',
     path: '',
-    angular: false,
-    react: false,
-    vue: false,
 }, yargs.argv);
 
 if (args.prod !== false) {
@@ -59,7 +53,7 @@ gulp.task('rtl', function (cb) {
                 var toRtlFile = func.dotPath(val.styles[i]);
 
                 // exclude scss file for now
-                if (toRtlFile.indexOf('.scss') === -1 && !(/\*/).test(toRtlFile)) {
+                if (toRtlFile.indexOf('.scss') === -1) {
                     stream = gulp.src(toRtlFile, {allowEmpty: true}).pipe(rtlcss()).pipe(rename({suffix: '.rtl'})).pipe(gulp.dest(func.pathOnly(toRtlFile)));
                     streams.push(stream);
 
@@ -78,6 +72,30 @@ gulp.task('rtl', function (cb) {
 
 // task to bundle js/css
 gulp.task('build-bundle', function (cb) {
+    // build by demo, leave demo empty to generate all demos
+    if (typeof build.config.demo !== 'undefined' && build.config.demo !== '') {
+        for (var demo in build.build.demos) {
+            if (!build.build.demos.hasOwnProperty(demo)) {
+                continue;
+            }
+
+            var splitDemos = build.config.demo.split(',').map(function (item) {
+                return item.trim();
+            });
+            if (splitDemos.indexOf(demo) === -1) {
+                delete build.build.demos[demo];
+            }
+        }
+    }
+
+    //exclude by demo
+    if (args.exclude !== '' && typeof args.exclude === 'string') {
+        var exclude = args.exclude.split(',');
+        exclude.forEach(function (demo) {
+            delete build.build.demos[demo];
+        });
+    }
+
     func.objectWalkRecursive(build.build, function (val, key) {
         if (val.hasOwnProperty('src')) {
             if (val.hasOwnProperty('bundle')) {
@@ -137,7 +155,7 @@ gulp.task('html-formatter', function (cb) {
 
 // copy demo from src to dist folder
 gulp.task('html', function (cb) {
-    gulp.src(process.cwd() + '/../src/**/*.html')
+    gulp.src(process.cwd() + '/../src/demo*/**')
         .pipe(gulp.dest('../dist'));
     cb();
 });
