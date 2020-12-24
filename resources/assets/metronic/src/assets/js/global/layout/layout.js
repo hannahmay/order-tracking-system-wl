@@ -25,32 +25,10 @@ var KTLayout = function() {
             classic: {
                 desktop: true,
                 mobile: true
-            },
-            offset: {
-                desktop: parseInt(KTUtil.css(headerEl, 'height')) - 10,
-                mobile: parseInt(KTUtil.css(headerMobileEl, 'height')) - 10,
-            },
-            minimize: {
-                desktop: {
-                    on: 'kt-header--minimize'
-                },
-                mobile: {
-                    on: 'kt-header-mobile--scroll'
-                }
             }
         };
 
         header = new KTHeader('kt_header', options);
-
-        if (asideMenu) {
-            header.on('minimizeOn', function() {
-                asideMenu.scrollReInit();
-            });
-
-            header.on('minimizeOff', function() {
-                asideMenu.scrollReInit();
-            });
-        }
     }
 
     // Header Menu
@@ -234,67 +212,58 @@ var KTLayout = function() {
                 zIndex: 90,
                 position: {
                     top: function() {
+                        var pos;
                         if (KTUtil.isInResponsiveRange('desktop')) {
-                            return 60; //parseInt(KTUtil.actualHeight( KTUtil.get('kt_header'), 'height') );
+                            pos = parseInt(KTUtil.actualHeight( KTUtil.get('kt_header'), 'height') );
                         } else {
-                            return parseInt(KTUtil.css( KTUtil.get('kt_header_mobile'), 'height') );
+                            pos = parseInt(KTUtil.css( KTUtil.get('kt_header_mobile'), 'height') );
                         }
+
+                        return pos;
                     },
                     left: function(portlet) {
-						var porletEl = portlet.getSelf();
+                        var porletEl = portlet.getSelf();
 
-						return KTUtil.offset(porletEl).left;
-					},
-					right: function(portlet) {
+                        return KTUtil.offset(porletEl).left;
+                    },
+                    right: function(portlet) {
                         var porletEl = portlet.getSelf();
 
                         var portletWidth = parseInt(KTUtil.css(porletEl, 'width'));
-						var bodyWidth = parseInt(KTUtil.css(KTUtil.get('body'), 'width'));
-						var portletOffsetLeft = KTUtil.offset(porletEl).left;
+                        var bodyWidth = parseInt(KTUtil.css(KTUtil.get('body'), 'width'));
+                        var portletOffsetLeft = KTUtil.offset(porletEl).left;
 
-						return bodyWidth - portletWidth - portletOffsetLeft;
-					}
+                        return bodyWidth - portletWidth - portletOffsetLeft;
+                    }
                 }
             }
         });
     }
 
-	// Calculate content available full height
-	var getContentHeight = function() {
-		var height;
+    // Calculate content available full height
+    var getContentHeight = function() {
+        var height;
 
-		height = KTUtil.getViewPort().height;
+        height = KTUtil.getViewPort().height;
 
-        var headerEl = KTUtil.getByID('kt_header');
-        var headerBottomEl = KTUtil.find(headerEl, '.kt-header__bottom')
-
-		if (headerEl && headerBottomEl) {
-            height = height - KTUtil.actualHeight(headerBottomEl, 'margin-top');
-            height = height - parseInt(KTUtil.css(headerBottomEl, 'margin-top')) - parseInt(KTUtil.css(headerBottomEl, 'margin-bottom'));
-	    }
-
-		if (KTUtil.getByID('kt_subheader')) {
-            height = height - KTUtil.actualHeight('kt_subheader');
-		}
-
-		if (KTUtil.getByID('kt_footer')) {
-			height = height - parseInt(KTUtil.css('kt_footer', 'height'));
+        if (KTUtil.getByID('kt_header')) {
+            height = height - KTUtil.actualHeight('kt_header');
         }
 
-        if (KTUtil.getByID('kt_wrapper')) {
-			height = height - parseInt(KTUtil.css('kt_wrapper', 'padding-top')) - parseInt(KTUtil.css('kt_wrapper', 'padding-bottom'));
-		}
+        if (KTUtil.getByID('kt_subheader')) {
+            height = height - KTUtil.actualHeight('kt_subheader');
+        }
 
-        if (KTUtil.getByID('kt_body')) {
-			height = height - parseInt(KTUtil.css('kt_body', 'padding-top')) - parseInt(KTUtil.css('kt_body', 'padding-bottom'));
-		}
+        if (KTUtil.getByID('kt_footer')) {
+            height = height - parseInt(KTUtil.css('kt_footer', 'height'));
+        }
 
-		if (KTUtil.getByID('kt_content')) {
-			height = height - parseInt(KTUtil.css('kt_content', 'padding-top')) - parseInt(KTUtil.css('kt_content', 'padding-bottom'));
-		}
+        if (KTUtil.getByID('kt_content')) {
+            height = height - parseInt(KTUtil.css('kt_content', 'padding-top')) - parseInt(KTUtil.css('kt_content', 'padding-bottom'));
+        }
 
-		return height;
-	}
+        return height;
+    }
 
     return {
         init: function() {
@@ -305,11 +274,13 @@ var KTLayout = function() {
             this.initPageStickyPortlet();
 
             // Non functional links notice(can be removed in production)
-			$('#kt_aside_menu, #kt_header_menu').on('click', '.kt-menu__link[href="#"]', function(e) {
-				swal.fire("", "You have clicked on a non-functional dummy link!");
-
-				e.preventDefault();
-			});
+            $('#kt_aside_menu, #kt_header_menu').on('click', '.kt-menu__link[href="#"]', function() {
+                if(location.hostname.match('keenthemes.com')) {
+                    swal.fire("You have clicked on a dummy link!", "To browse the theme features please refer to the header menu.", "warning");
+                } else {
+                    swal.fire("You have clicked on a dummy link!", "This demo shows only its unique layout features. <b>Keen's</b> all available features can be re-used in this and any other demos by refering to <b>the default demo</b>.", "warning");
+                }
+            });
         },
 
         initHeader: function() {
@@ -356,15 +327,10 @@ var KTLayout = function() {
         },
 
         getContentHeight: function() {
-			return getContentHeight();
-		}
+            return getContentHeight();
+        }
     };
 }();
-
-// webpack support
-if (typeof module !== 'undefined') {
-    module.exports = KTLayout;
-}
 
 $(document).ready(function() {
     KTLayout.init();
