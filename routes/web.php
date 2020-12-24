@@ -18,6 +18,6 @@ Route::get('/', function () {
 });
 
 
-
+Route::get('/wages', 'WageController@index')->name('wages');
 
 
