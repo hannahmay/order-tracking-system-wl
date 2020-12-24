@@ -5,7 +5,7 @@
 <!-- CSRF Token -->
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
-<title>{{ config('app.name', 'Order Tracking System') }}</title>
+<title>{{ config('app.name', 'Order Tracking System WL') }}</title>
 
 <!--begin::Fonts -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700|Asap+Condensed:500">
@@ -14,4 +14,4 @@
 
 <link href="{{ asset('css/app.css') }}" rel="stylesheet" type="text/css" >
 
-<link rel="shortcut icon" href="{{ asset('assets/media/logos/asec.ico') }}" />
+<link rel="shortcut icon" href="{{ asset('assets/media/logos/wl.png') }}" />
