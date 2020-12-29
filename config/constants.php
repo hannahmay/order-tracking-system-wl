@@ -44,5 +44,10 @@ return [
         'CREATED_ORDER' => 'Created order',
         'UPDATED_ORDER' => 'Updated order',
         'DELETED_ORDER' => 'Deleted order',
+    ],
+
+    'supplier_type' =>[
+        'O' => 'Online Store',
+        'P' => 'Physical Store',
     ]
 ];
