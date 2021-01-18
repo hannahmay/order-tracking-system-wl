@@ -14,6 +14,7 @@ let mix = require('laravel-mix');
 mix
     .js('resources/assets/js/app.js', 'public/js')
     .sass('resources/assets/sass/app.scss', 'public/css')
+    .sass('resources/assets/metronic/src/assets/sass/pages/login/login-4.scss', 'public/css/pages');
 
 // copy images folder into laravel public folder
 mix.copyDirectory('resources/assets/metronic/src/assets/media', 'public/assets/media');

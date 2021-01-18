@@ -13,11 +13,16 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
+Auth::routes();
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', function() {
+        return view('dashboard');
+    })->name('dashboard');
+
+    Route::get('/wages', 'WageController@index')->name('wages');
+
+    Route::get('/suppliers', 'SupplierController@index')->name('suppliers');
+
 });
-
-
-Route::get('/wages', 'WageController@index')->name('wages');
-
 
